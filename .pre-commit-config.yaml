@@ -1,0 +1,33 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # General cleanup hooks - strictly limited to unformatted file types
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        # Exclude all files fully managed by Prettier and dotnet format
+        exclude: \.(cs|yaml|yml|xml|csproj)$
+      - id: end-of-file-fixer
+        # Exclude all files fully managed by Prettier and dotnet format
+        exclude: \.(cs|yaml|yml|xml|csproj)$
+      - id: check-yaml
+      - id: check-added-large-files
+
+  # Dedicated Autoformatter for configuration and markup layouts
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: \.(yaml|yml|xml|csproj)$
+        additional_dependencies: ["prettier@3.1.0", "@prettier/plugin-xml"]
+
+  # Dedicated Autoformatter for C# source code (EditorConfig-driven)
+  - repo: local
+    hooks:
+      - id: dotnet-format
+        name: dotnet format
+        language: system
+        entry: dotnet format --include
+        types_or: [c#]
+        pass_filenames: true

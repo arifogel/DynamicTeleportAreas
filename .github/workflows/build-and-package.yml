@@ -1,0 +1,177 @@
+name: DynamicTeleportAreas CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Cache Pre-Commit Hooks
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Install Pre-Commit Framework
+        run: pip install pre-commit
+
+      - name: Execute Format Validations
+        run: pre-commit run --all-files
+
+  build-test-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v7
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      # Query the Steam CMD API to find the most recent public build ID for the Valheim Dedicated Server (AppID: 896660).
+      # This ID serves as a dynamic cache key to ensure the runner detects official game updates immediately.
+      - name: Fetch Live Valheim Server Build ID
+        run: |
+          BUILD_ID=$(curl -s https://api.steamcmd.net/v1/info/896660 | jq -r '.data."896660".depots.branches.public.buildid')
+          if [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "null" ]; then
+            echo "API fallback applied due to network timeout."
+            echo "VALHEIM_BUILD_ID=static-fallback" >> $GITHUB_ENV
+          else
+            echo "VALHEIM_BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+            echo "Discovered Live Valheim Build ID: $BUILD_ID"
+          fi
+
+      # Attempt to restore the isolated game libraries folder using the public Steam build ID.
+      # If a match is found, the workflow bypasses the full SteamCMD utility execution to save bandwidth and runtime.
+      - name: Check for Cached Game Binaries
+        id: cache-game-libs
+        uses: actions/cache@v5
+        with:
+          path: game_libs
+          key: valheim-game-libs-${{ env.VALHEIM_BUILD_ID }}
+
+      - name: Setup SteamCMD
+        if: steps.cache-game-libs.outputs.cache-hit != 'true'
+        uses: RageAgainstThePixel/setup-steamcmd@v1
+
+      # Executes only on a cache miss. Downloads the authoritative dedicated server binaries using an anonymous profile,
+      # then extracts only the core reference assemblies required for project compilation into a persistent staging directory.
+      - name: Download Valheim Dedicated Server Binaries
+        if: steps.cache-game-libs.outputs.cache-hit != 'true'
+        run: |
+          steamcmd +force_install_dir ${{ github.workspace }}/valheim_download +login anonymous +app_update 896660 validate +quit
+          mkdir -p game_libs
+          cp ${{ github.workspace }}/valheim_download/valheim_server_Data/Managed/assembly_valheim.dll game_libs/
+          cp ${{ github.workspace }}/valheim_download/valheim_server_Data/Managed/UnityEngine.dll game_libs/
+          cp ${{ github.workspace }}/valheim_download/valheim_server_Data/Managed/UnityEngine.CoreModule.dll game_libs/
+
+      - name: Download BepInEx Core Framework
+        run: |
+          mkdir -p bepinex_extracted
+          wget https://github.com/BepInEx/BepInEx/releases/download/v5.4.23.3/BepInEx_win_x64_5.4.23.3.zip
+          unzip BepInEx_win_x64_5.4.23.3.zip -d bepinex_extracted
+
+      # Constructs the local environment structure required by the project's assembly path references.
+      # This maps dependencies retrieved from both the game cache and the BepInEx archive into a uniform tree.
+      - name: Construct Mock Environmental Paths
+        run: |
+          mkdir -p env_mock/valheim_Data/Managed
+          mkdir -p env_mock/BepInEx/core
+          mkdir -p env_mock/BepInEx/plugins
+
+          # Populate game engine dependencies from the isolated staging folder
+          cp game_libs/assembly_valheim.dll env_mock/valheim_Data/Managed/
+          cp game_libs/UnityEngine.dll env_mock/valheim_Data/Managed/
+          cp game_libs/UnityEngine.CoreModule.dll env_mock/valheim_Data/Managed/
+
+          # Populate modding framework dependencies from the extracted BepInEx release
+          cp bepinex_extracted/BepInEx/core/BepInEx.dll env_mock/BepInEx/core/
+          cp bepinex_extracted/BepInEx/core/0Harmony.dll env_mock/BepInEx/core/
+
+      - name: Restore Project Dependencies
+        run: dotnet restore DynamicTeleportAreas.sln
+
+      - name: Compile Solution Assemblies
+        run: |
+          dotnet build DynamicTeleportAreas.sln \
+            --configuration Release \
+            -p:ValheimDir=${{ github.workspace }}/env_mock \
+            -p:R2ModmanProfileDir=${{ github.workspace }}/env_mock
+
+      - name: Execute Static Architecture Tests
+        run: dotnet test DynamicTeleportAreas.sln --configuration Release --no-build
+
+      # Scans the source tree to identify the authoritative version string declared inside the main C# source file.
+      # This process treats the project source code as the single source of truth, preventing metadata drift.
+      - name: Extract Authoritative Version from Source Code
+        run: |
+          # Locate the source file containing the main BepInPlugin initialization macro
+          PLUGIN_FILE=$(grep -rl 'BepInPlugin' DynamicTeleportAreas/ | head -n 1)
+
+          # Strategy A: Extract the literal string token from the 3rd argument of the [BepInPlugin(...)] attribute
+          VERSION=$(grep -oP 'BepInPlugin\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"\K[^"]+' "$PLUGIN_FILE" || true)
+
+          # Strategy B: Fallback to parsing a constant variable field definition named 'Version' if explicit attribute string parsing fails
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep -oP 'Version\s*=\s*"\K[^"]+' "$PLUGIN_FILE" | head -n 1)
+          fi
+
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: Failed to extract version from source file: $PLUGIN_FILE"
+            exit 1
+          fi
+
+          # Export the version to the runner state environment for subsequent steps
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Successfully discovered authoritative mod version: $VERSION"
+
+      # Aggregates build files and configuration manifests into isolated distribution target patterns.
+      - name: Structure Distribution Artifacts
+        run: |
+          mkdir -p dist/thunderstore
+          mkdir -p dist/nexusmods/BepInEx/plugins
+
+          # Hydrate the manifest template with the extracted version string using environment substitution
+          envsubst < manifest.json.in > manifest.json
+
+          CP_TARGET="DynamicTeleportAreas/bin/Release/DynamicTeleportAreas.dll"
+
+          # Build staging directory layout for Thunderstore (flat zip requirements)
+          cp $CP_TARGET dist/thunderstore/
+          cp manifest.json dist/thunderstore/
+          cp README.md dist/thunderstore/
+          cp icon.png dist/thunderstore/
+
+          # Build staging directory layout for Nexus Mods (pre-mapped installation folders)
+          cp $CP_TARGET dist/nexusmods/BepInEx/plugins/
+
+      # Packs the structured staging folders into distribution-ready zip archives, labeled with the mod version.
+      - name: Generate Distribution Packages
+        run: |
+          cd dist/thunderstore && zip -r ../../DynamicTeleportAreas_Thunderstore_${{ env.VERSION }}.zip ./* && cd ../..
+          cd dist/nexusmods && zip -r ../../DynamicTeleportAreas_NexusMods_${{ env.VERSION }}.zip ./* && cd ../..
+
+      # Archives the finalized production packages to the run's workspace artifacts, tagged with the commit SHA for traceability.
+      - name: Archive Distribution Zips to GitHub Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: production-packages-${{ github.sha }}
+          path: |
+            DynamicTeleportAreas_Thunderstore_${{ env.VERSION }}.zip
+            DynamicTeleportAreas_NexusMods_${{ env.VERSION }}.zip

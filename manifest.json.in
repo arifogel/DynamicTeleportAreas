@@ -1,0 +1,10 @@
+{
+    "name": "DynamicTeleportAreas",
+    "version_number": "${VERSION}",
+    "website_url": "https://github.com/arifogel/DynamicTeleportAreas",
+    "description": "Fixes long portal loading screens caused by Render Limits.",
+    "dependencies": [
+        "denikson-BepInExPack_Valheim-5.4.2333",
+        "JereKuusela-Render_Limits-1.14.0"
+    ]
+}

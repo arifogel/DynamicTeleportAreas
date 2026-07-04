@@ -1,0 +1,17 @@
+# Handle text files automatically, matching them to a uniform style
+* text=auto
+
+# Force code and configuration files to strictly use Linux line endings (LF)
+# This keeps Prettier, dotnet format, and WSL perfectly synchronized
+*.cs text eol=lf
+*.xml text eol=lf
+*.csproj text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Leave compilation binaries and visual assets completely raw
+*.dll binary
+*.png binary
+*.jpg binary

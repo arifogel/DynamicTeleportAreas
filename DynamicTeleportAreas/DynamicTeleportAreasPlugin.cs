@@ -15,7 +15,7 @@ public class DynamicTeleportAreasPlugin : BaseUnityPlugin
 {
     private const string PluginGuid = "com.arifogel.dynamicteleportareas";
     private const string PluginName = "DynamicTeleportAreas";
-    private const string PluginVersion = "1.0.0";
+    private const string PluginVersion = "1.0.1";
 
     private static DynamicTeleportAreasPlugin s_instance;
 

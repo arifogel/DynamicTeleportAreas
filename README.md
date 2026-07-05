@@ -37,11 +37,11 @@ The mod creates a configuration file named com.arifogel.dynamicteleportareas.cfg
    * *NormalGeneratedArea* (Number): Your preferred high visibility distance for the terrain and mountains in the far distance.
 
 3. Portal Transition Environment
-   * *PortalLoadedArea* (Number): The temporary, lower object/structure visibility distance used during the portal loading screen (set to the standard Valheim default of 2).
-   * *PortalGeneratedArea* (Number): The temporary, lower terrain rendering distance used during the portal loading screen (set to the standard Valheim default of 4).
+   * *PortalLoadedArea* (Number): The temporary lower object/structure visibility distance used during the portal loading screen (defaults to vanilla value of 2).
+   * *PortalGeneratedArea* (Number): The temporary lower terrain rendering distance used during the portal loading screen (defaults vanilla value of 4).
 
 4. Engine Timing Controls
-   * *FrameDelayCount* (Number): How many animation frames the mod waits after you exit a portal before it starts expanding your view distance back to your high settings (default is 30 frames).
+   * *FrameDelayCount* (Number): How many animation frames the mod waits after you exit a portal before it starts expanding your view distance back to your high settings.
 
 ## Requirements
 
@@ -53,12 +53,12 @@ The mod creates a configuration file named com.arifogel.dynamicteleportareas.cfg
 
 1. Ensure both BepInEx and Render Limits are installed and working.
 
-2. Download DynamicTeleportAreas.dll.
+2. Install DynamicTeleportAreas.dll:
+    * r2modman Users: Search for DynamicTeleportAreas in the Online mod list, and install it.
+    * Manual Installation:
+      * Place the .dll file into your game's plugins folder, typically "C:\Program Files (x86)\Steam\steamapps\common\Valheim\BepInEx\plugins"
+    * Other mod managers not tested - if you have any problems, pleaes file a [new GitHub issue](https://github.com/arifogel/DynamicTeleportAreas/issues/new) for fastest turnaround.
 
-3. Place the .dll file into your game's plugins folder:
+3. Start the game to automatically generate and apply the default settings.
 
-   * Manual Installation: Steam\steamapps\common\Valheim\BepInEx\plugins\
-
-   * r2modman Users: Select your profile, click Help, click Browse profile folder, and navigate to BepInEx/plugins/.
-
-4. Start the game to automatically generate and apply the default settings.
+4. (Optional) configure in-game by pressing F1 to activate the BepInEx mod configuration UI.

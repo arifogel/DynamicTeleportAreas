@@ -46,7 +46,7 @@ public class DynamicTeleportAreasPlugin : BaseUnityPlugin
     {
         Enabled = Config.Bind(
             "1 - Global Settings", "Enabled", true,
-            "Whether mod should be enabled or disabled.");
+            "Turns the mod on or off.");
 
         s_enableMessageHudNotifications = Config.Bind(
             "1 - Global Settings", "MessageHudNotifications", false,
@@ -54,23 +54,23 @@ public class DynamicTeleportAreasPlugin : BaseUnityPlugin
 
         s_normalLoadedArea = Config.Bind(
             "2 - Standard Gameplay Environment", "NormalLoadedArea", 4,
-            "The 'Loaded zones' value restored after portal stabilization completes.");
+            "Your preferred high visibility distance for objects and structures while running around.");
 
         s_normalGeneratedArea = Config.Bind(
             "2 - Standard Gameplay Environment", "NormalGeneratedArea", 6,
-            "The 'Generated zones' value restored after portal stabilization completes.");
+            "Your preferred high visibility distance for the terrain and mountains in the far distance.");
 
         TeleportLoadedArea = Config.Bind(
             "3 - Portal Transition Environment", "PortalLoadedArea", 2,
-            "The temporary 'Loaded zones' value enforced during portal loading screens.");
+            "The temporary lower object/structure visibility distance used during the portal loading screen.");
 
         TeleportGeneratedArea = Config.Bind(
             "3 - Portal Transition Environment", "PortalGeneratedArea", 4,
-            "The temporary 'Generated zones' value enforced during portal loading screens.");
+            "The temporary lower terrain rendering distance used during the portal loading screen.");
 
         s_frameDelayCount = Config.Bind(
             "4 - Engine Timing Controls", "FrameDelayCount", 30,
-            "The number of engine frames to wait after exiting a portal before restoring standard render limits. Higher values delay full world detail but prevent post-portal stutter. The optimal value is the lowest setting where your framerate fully stabilizes before the environment expands.");
+            "How many animation frames the mod waits after you exit a portal before it starts expanding your view distance back to your high settings.");
     }
 
     public static void SetRenderLimits(int loaded, int generated)
@@ -180,7 +180,8 @@ internal static class PatchPortalExit
     private static bool s_wasTeleporting;
 
     [SuppressMessage("ReSharper", "InconsistentNaming",
-        Justification = "The double-underscore prefix is an absolute syntactic requirement for Harmony runtime instance injection.")]
+        Justification =
+            "The double-underscore prefix is an absolute syntactic requirement for Harmony runtime instance injection.")]
     internal static void Postfix(Player __instance)
     {
         if (!DynamicTeleportAreasPlugin.Enabled.Value)

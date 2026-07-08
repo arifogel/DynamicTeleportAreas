@@ -10,13 +10,9 @@ using HarmonyLib;
 
 namespace DynamicTeleportAreas;
 
-[BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public class DynamicTeleportAreasPlugin : BaseUnityPlugin
 {
-    private const string PluginGuid = "com.arifogel.dynamicteleportareas";
-    private const string PluginName = "DynamicTeleportAreas";
-    private const string PluginVersion = "1.0.1";
-
     private static DynamicTeleportAreasPlugin s_instance;
 
     // Control flag to cleanly intercept and drop on-screen HUD popups
@@ -36,7 +32,7 @@ public class DynamicTeleportAreasPlugin : BaseUnityPlugin
         s_instance = this;
         InitConfiguration();
 
-        Harmony harmony = new(PluginGuid);
+        Harmony harmony = new(MyPluginInfo.PLUGIN_GUID);
         harmony.PatchAll();
 
         Logger.LogInfo("DynamicTeleportAreas initialized and configs bound.");

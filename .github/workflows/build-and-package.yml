@@ -117,29 +117,20 @@ jobs:
       - name: Execute Static Architecture Tests
         run: dotnet test DynamicTeleportAreas.sln --configuration Release --no-build
 
-      # Scans the source tree to identify the authoritative version string declared inside the main C# source file.
-      # This process treats the project source code as the single source of truth, preventing metadata drift.
-      - name: Extract Authoritative Version from Source Code
+      # VERSION is the single source of truth for the mod version, read directly by the
+      # .csproj at compile time (see <Version> in DynamicTeleportAreas.csproj) and by this
+      # workflow for packaging.
+      - name: Read Authoritative Version
         run: |
-          # Locate the source file containing the main BepInPlugin initialization macro
-          PLUGIN_FILE=$(grep -rl 'BepInPlugin' DynamicTeleportAreas/ | head -n 1)
-
-          # Strategy A: Extract the literal string token from the 3rd argument of the [BepInPlugin(...)] attribute
-          VERSION=$(grep -oP 'BepInPlugin\(\s*"[^"]+"\s*,\s*"[^"]+"\s*,\s*"\K[^"]+' "$PLUGIN_FILE" || true)
-
-          # Strategy B: Fallback to parsing a constant variable field definition named 'Version' if explicit attribute string parsing fails
-          if [ -z "$VERSION" ]; then
-            VERSION=$(grep -oP 'Version\s*=\s*"\K[^"]+' "$PLUGIN_FILE" | head -n 1)
-          fi
+          VERSION=$(cat VERSION | tr -d '[:space:]')
 
           if [ -z "$VERSION" ]; then
-            echo "ERROR: Failed to extract version from source file: $PLUGIN_FILE"
+            echo "ERROR: VERSION file is empty"
             exit 1
           fi
 
-          # Export the version to the runner state environment for subsequent steps
           echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Successfully discovered authoritative mod version: $VERSION"
+          echo "Using mod version: $VERSION"
 
       # Aggregates build files and configuration manifests into isolated distribution target patterns.
       - name: Structure Distribution Artifacts

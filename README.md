@@ -55,6 +55,10 @@ The mod creates a configuration file named com.arifogel.dynamicteleportareas.cfg
 
 * [Render Limits](https://github.com/JereKuusela/valheim-render_limits) [[Nexus](https://www.nexusmods.com/valheim/mods/1842)] [[Thunderstore](https://thunderstore.io/c/valheim/p/JereKuusela/Render_Limits)] by Jere Kuusela
 
+## Source
+DynamicTeleportAreas is open source software, released under the MIT license.
+The [source code is maintained on GitHub](https://github.com/arifogel/DynamicTeleportAreas).
+
 ## Installation
 
 1. Ensure both BepInEx and Render Limits are installed and working.

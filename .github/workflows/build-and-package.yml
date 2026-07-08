@@ -10,18 +10,18 @@ jobs:
   lint-and-format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.x"
 
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "8.0.x"
 
       - name: Cache Pre-Commit Hooks
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -37,10 +37,10 @@ jobs:
 
     steps:
       - name: Checkout Source Code
-        uses: actions/checkout@v7
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
       - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: "8.0.x"
 
@@ -61,14 +61,14 @@ jobs:
       # If a match is found, the workflow bypasses the full SteamCMD utility execution to save bandwidth and runtime.
       - name: Check for Cached Game Binaries
         id: cache-game-libs
-        uses: actions/cache@v5
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: game_libs
           key: valheim-game-libs-${{ env.VALHEIM_BUILD_ID }}
 
       - name: Setup SteamCMD
         if: steps.cache-game-libs.outputs.cache-hit != 'true'
-        uses: RageAgainstThePixel/setup-steamcmd@v1
+        uses: RageAgainstThePixel/setup-steamcmd@40a5a6aa31e2a654ded361a97a93ea35f503fa76 # v1
 
       # Executes only on a cache miss. Downloads the authoritative dedicated server binaries using an anonymous profile,
       # then extracts only the core reference assemblies required for project compilation into a persistent staging directory.
@@ -169,7 +169,7 @@ jobs:
 
       # Archives the finalized production packages to the run's workspace artifacts, tagged with the commit SHA for traceability.
       - name: Archive Distribution Zips to GitHub Artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: production-packages-${{ github.sha }}
           path: |

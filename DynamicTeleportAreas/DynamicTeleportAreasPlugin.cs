@@ -206,13 +206,3 @@ internal static class PatchMessageHudSilence
         return !DynamicTeleportAreasPlugin.SuppressNotifications;
     }
 }
-
-// Intercepts the Chat log frame in case notifications are routed locally
-[HarmonyPatch(typeof(Chat), "AddString")]
-internal static class PatchChatSilence
-{
-    internal static bool Prefix()
-    {
-        return !DynamicTeleportAreasPlugin.SuppressNotifications;
-    }
-}

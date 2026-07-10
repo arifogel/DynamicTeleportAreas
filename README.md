@@ -3,6 +3,8 @@
 DynamicTeleportAreas is a performance utility mod for Valheim that fixes the long portal loading screens caused by using the [Render Limits](https://github.com/JereKuusela/valheim-render_limits) mod with increased loaded areas and/or generated areas.
 
 ## Changelog
+* **1.0.2**
+  * Removed non-functional code that was triggering warnings in BepInEx log
 * **1.0.1**
   * Updated descriptions for configuration options
 * **1.0.0**
